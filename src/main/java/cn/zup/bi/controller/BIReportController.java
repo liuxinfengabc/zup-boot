@@ -1,16 +1,11 @@
 package cn.zup.bi.controller;
 
 import cn.zup.bi.entity.BI_REPORT;
-import cn.zup.bi.entity.BI_TOPIC_FIELD;
-import cn.zup.bi.entity.BI_TOPIC_FIELD_VIEW;
+import cn.zup.bi.entity.BI_REPORT_FIELD;
 import cn.zup.bi.service.ReportFieldService;
 import cn.zup.bi.service.ReportService;
-import cn.zup.bi.service.TopicFieldService;
-import cn.zup.framework.json.JsonDateValueProcessor;
-import net.sf.json.JSONArray;
+import cn.zup.framework.common.vo.CommonResult;
 import net.sf.json.JSONObject;
-import net.sf.json.JsonConfig;
-import org.jeecgframework.minidao.pojo.MiniDaoPage;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,20 +14,23 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+/**
+ * @author gavin
+ */
 @Controller
 @RequestMapping("/rest/bi/biReportController")
 public class BIReportController {
 	@Resource
-	private TopicFieldService topicFieldService;
-	@Resource
 	private ReportService reportService;
+
 	@Resource
 	private ReportFieldService reportFieldService;
-	
+
 	/**
 	 * 返回首页
 	 * @author 谢炎
@@ -52,20 +50,22 @@ public class BIReportController {
 	 * 获取主题字段数据
 	 * @author 谢炎
 	 * */
-	@RequestMapping("/getFieldData")
-	@ResponseBody
-	public String getFieldData(Integer topic_Id){
-		List<BI_TOPIC_FIELD> list = topicFieldService.getTopicFields(topic_Id);
-		List<BI_TOPIC_FIELD_VIEW> viewList = new ArrayList<BI_TOPIC_FIELD_VIEW>();
-		for (int i = 0; i < list.size(); i++) {
-			BI_TOPIC_FIELD_VIEW view = new BI_TOPIC_FIELD_VIEW();
-			view.setField(list.get(i));
-			viewList.add(view);
-		}
-		JSONObject json = new JSONObject();
-		json.put("data", viewList);
-		return json.toString();
-	}
+//	@RequestMapping("/getFieldData")
+//	@ResponseBody
+//	public String getFieldData(Integer topic_Id){
+//		List<BI_TOPIC_FIELD> list = topicFieldService.getTopicFields(topic_Id);
+//
+//
+//		List<BI_TOPIC_FIELD_VIEW> viewList = new ArrayList<BI_TOPIC_FIELD_VIEW>();
+//		for (int i = 0; i < list.size(); i++) {
+//			BI_TOPIC_FIELD_VIEW view = new BI_TOPIC_FIELD_VIEW();
+//			view.setField(list.get(i));
+//			viewList.add(view);
+//		}
+//		JSONObject json = new JSONObject();
+//		json.put("data", viewList);
+//		return json.toString();
+//	}
 	
 	/**
 	 * 保存报表
@@ -77,10 +77,11 @@ public class BIReportController {
 		report.setCreate_Date(new Date());
 		int r = reportService.saveReport(report);
 		JSONObject json = new JSONObject();
-		if(r!=0)
+		if(r!=0) {
 			json.put("data", "success");
-		else
+		}else {
 			json.put("data", "error");
+		}
 		return json.toString();
 	}
 	
@@ -91,12 +92,14 @@ public class BIReportController {
 	@RequestMapping("/updateReport")
 	@ResponseBody
 	public String updateReport(BI_REPORT report){
+
 		int r = reportService.saveReport(report);
 		JSONObject json = new JSONObject();
-		if(r!=0)
+		if(r!=0) {
 			json.put("data", "success");
-		else
+		}else {
 			json.put("data", "error");
+		}
 		return json.toString();
 	}
 	
@@ -143,19 +146,9 @@ public class BIReportController {
 	 * */
 	@RequestMapping("/getReportList")
 	@ResponseBody
-	public String getReportList(BI_REPORT report, int rows, int page){
-		MiniDaoPage<BI_REPORT> list = reportService.getReportPagingList(report, page, rows);
-		JSONObject json = new JSONObject();
-		json.put("rows", rows); 
-		json.put("page", list.getPages());
-		json.put("total",list.getTotal());		
-		//日期类型转换
-		JsonConfig jsonConfig = new JsonConfig();
-		jsonConfig.registerJsonValueProcessor(Date.class,  
-		          new JsonDateValueProcessor("yyyy-MM-dd HH:mm:ss")); 
-		JSONArray jsonArray = JSONArray.fromObject(list.getResults(), jsonConfig);  
-		json.put("data", jsonArray);
-		return json.toString();
+	public CommonResult getReportList(BI_REPORT report, int rows, int page){
+		List<BI_REPORT> list = reportService.getReportPagingList(report);
+		return CommonResult.successPage(list, page, rows);
 	}
 	
 	/**
@@ -171,4 +164,48 @@ public class BIReportController {
 		json.put("msg", "success");
 		return json.toString();
 	}
+
+
+	/**
+	 * 获取报表列表
+	 * @author 段延玉  郑晖改
+	 * */
+	@RequestMapping("/getTableName")
+	@ResponseBody
+	public String getTableName(BI_REPORT report){
+		List<BI_REPORT> biReports = reportService.getReportPagingList(report);
+
+		Map<String,List<BI_REPORT_FIELD>> maps = new HashMap<>();
+
+		Map<String,Map<String,String>> mapMap = new HashMap<>();
+
+		biReports.stream().forEach(br -> {
+
+			BI_REPORT_FIELD reportField = new BI_REPORT_FIELD();
+			reportField.setReport_Id(br.getReport_Id());
+
+			List<BI_REPORT_FIELD> biReportFields = reportFieldService.getReportFieldList(reportField, 0, 0);
+			Map<String,String> m = new HashMap<>();
+
+			biReportFields.stream().forEach(brf->{
+				m.put(brf.getField_Name(),brf.getField_Name());
+			});
+
+			//用于前台过滤比较
+			mapMap.put(br.getReport_Id()+"",m);
+
+			//每一个key都是Report_Id
+			maps.put(br.getReport_Id()+"",biReportFields);
+
+		});
+
+
+		JSONObject json = new JSONObject();
+		json.put("biReportLists", biReports);
+		json.put("biReportFieldMaps", maps);
+		json.put("mapMap", mapMap);
+
+		return json.toString();
+	}
+
 }

@@ -13,7 +13,7 @@ String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.
 	<meta http-equiv="cache-control" content="no-cache">
 	<meta http-equiv="expires" content="0">    
 	<meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
-	<meta http-equiv="description" content="This is my page">
+	<meta http-equiv="description" content="BI Show Page">
 	<!--  import style	-->
 	<jsp:include page="../include/mainHead.jsp"></jsp:include>
   </head>
@@ -29,6 +29,8 @@ String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.
 				<button class="btn btn-primary btn-sm" id="btnDelete">删除</button>
 				<button class="btn btn-primary btn-sm" id="btnScreenSetting">布局设置</button>
 				<button class="btn btn-primary btn-sm" id="btnReportSetting">元素设置</button>
+				<button class="btn btn-primary btn-sm" id="btnPreview">报表预览</button>
+				<button class="btn btn-primary btn-sm" id="btnDesign">设计图表</button>
 			</div>
 			<div class="col-md-7"></div>
 		</div>
@@ -278,7 +280,18 @@ String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.
 					getReportData(e);
 				}
 			});
-			
+
+			// 设计图表按钮
+			$("#btnDesign").on("click", function(){
+				var Page_Id = 0;
+				if($("#bi_Page_Id:checked").length != 1) {
+					parent.parent.bootbox.alert("只能选择一个表单进行设计", function(){});
+					return;
+				}else{
+					Page_Id = $("#bi_Page_Id:checked").val();
+					window.open("/rest/bi/biScreenController?pageId="+Page_Id+"&tabName="+$("#bi_Page_Id:checked").parent().parent().next().next().next().text(), '表单布局设置', 'height=650,width=1200,top=200,left=50,toolbar=no,menubar=no,scrollbars=no, resizable=no,location=no, status=no');
+				}
+			});
 			
 			//布局设置按钮
 			$("#btnScreenSetting").on("click", function(){
@@ -343,7 +356,18 @@ String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.
 					});
 				}
 			});
-			
+
+			//布局设置按钮
+			$("#btnPreview").on("click", function(){
+				var Page_Id = 0;
+				if($("#bi_Page_Id:checked").length != 1) {
+					parent.parent.bootbox.alert("只能选择一个表单设置布局", function(){});
+					return;
+				}else{
+					Page_Id = $("#bi_Page_Id:checked").val();
+					window.open("/Bi/BIPageShow?pageId="+Page_Id);
+				}
+			});
 			//选择页面类型
 	    	function loadPageType(){
 	    		$.ajax({
@@ -391,8 +415,7 @@ String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.
                    		$("#menu_Id").empty();
                    		$("#menu_Id").append("<option value='0'>请选择菜单</option>");
                    		for(var i=0; i<result.data.length; i++){
-                   			if(result.data[i].urlAddress == "@bi")
-                   				$("#menu_Id").append("<option value="+result.data[i].menuId+">"+result.data[i].menuName+"</option>");
+                   			$("#menu_Id").append("<option value="+result.data[i].menuId+">"+result.data[i].menuName+"</option>");
                     	}
                    		$("#menu_Id").val(0);
                    }

@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.zup.bi.dao.ReportFieldDao">
+
+    <resultMap id="baseMap" type="cn.zup.bi.entity.BI_REPORT_FIELD">
+        <id property="report_Field_Id" column="REPORT_FIELD_ID" javaType="java.lang.Integer" jdbcType="INTEGER"></id>
+        <id property="report_Id" column="REPORT_ID" javaType="java.lang.Integer" jdbcType="INTEGER"></id>
+        <result property="field_Location" column="FIELD_LOCATION" javaType="java.lang.Integer" jdbcType="INTEGER"></result>
+        <result property="dim_Order" column="DIM_ORDER" javaType="java.lang.Integer" jdbcType="INTEGER"></result>
+        <result property="display" column="DISPLAY" javaType="java.lang.Integer" jdbcType="INTEGER"></result>
+        <result property="field_Name" column="FIELD_NAME" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+        <result property="field_Title" column="FIELD_TITLE" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+        <result property="field_Caption" column="FIELD_CAPTION" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+        <result property="data_Type" column="DATA_TYPE" javaType="java.lang.Integer" jdbcType="INTEGER"></result>
+        <result property="field_Type" column="FIELD_TYPE" javaType="java.lang.Integer" jdbcType="INTEGER"></result>
+        <result property="aggregate_Type" column="AGGREGATE_TYPE" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+        <result property="unit" column="UNIT" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+        <result property="data_Type_Str" column="data_Type_Str" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+        <result property="field_Type_Str" column="field_Type_Str" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+        <result property="dim_Id" column="DIM_ID" javaType="java.lang.Integer" jdbcType="INTEGER"></result>
+    </resultMap>
+
+    <select id="getReportTopicField" resultMap="baseMap" parameterType="cn.zup.bi.entity.BI_REPORT_FIELD">
+        SELECT
+        *
+        FROM bi_report_field brf
+        WHERE 1=1
+        <where>
+            <if test="reportId">
+                brf.REPORT_ID = #{ reportId}
+            </if>
+        </where>
+    </select>
+
+    <select id="getReportFieldList" resultMap="baseMap" parameterType="cn.zup.bi.entity.BI_REPORT_FIELD">
+        SELECT
+        brf.REPORT_FIELD_ID,
+        brf.REPORT_ID,
+        brf.FIELD_LOCATION,
+        brf.DIM_ORDER,
+        brf.FIELD_TITLE,
+        brf.FIELD_NAME,
+        brf.DISPLAY,
+        brf.FIELD_CAPTION,
+        brf.DATA_TYPE,
+        brf.FIELD_TYPE,
+        brf.AGGREGATE_TYPE,
+        brf.UNIT,
+        dtCon.SUBNAME as data_Type_Str,
+        ftCon.SUBNAME AS field_Type_Str
+        FROM bi_report_field brf
+        LEFT JOIN config dtCon ON dtCon.SUBID = brf.DATA_TYPE AND dtCon.CONFIGID = 77
+        LEFT JOIN config ftCon ON ftCon.SUBID = brf.FIELD_TYPE AND ftCon.CONFIGID = 79
+
+        <where>
+            <if test="reportField.report_Id != null">
+                AND brf.REPORT_ID = #{ reportField.report_Id}
+            </if>
+            <if test="reportField.field_Location != null">
+                AND brf.FIELD_LOCATION = #{ reportField.field_Location}
+            </if>
+
+            <if test="reportField.dim_Id_Str != null and reportField.dim_Id_Str!=''">
+                AND brf.DIM_ID = #{ reportField.dim_Id_Str}
+            </if>
+        </where>
+        ORDER BY REPORT_FIELD_ID DESC
+    </select>
+
+    <select id="getReportFieldByReportId" resultMap="baseMap" parameterType="cn.zup.bi.entity.BI_REPORT_FIELD">
+        SELECT
+        *
+        FROM bi_report_field brf
+        <where>
+            <if test="reportId">
+                brf.REPORT_ID = #{ reportId}
+            </if>
+        </where>
+        ORDER BY FIELD_LOCATION, brf.DIM_ORDER
+    </select>
+
+    <select id="getReportFieldById" resultMap="baseMap" parameterType="java.lang.Integer">
+        SELECT
+            *
+        FROM bi_report_field brf
+        <where>
+            <if test="reportField.report_Id != null">
+                AND brf.REPORT_ID = #{reportField.report_Id}
+            </if>
+            <if test="reportField.report_Field_Id != null">
+                AND brf.REPORT_FIELD_ID = #{ reportField.report_Field_Id}
+            </if>
+        </where>
+    </select>
+
+    <select id="getReportDimCount" resultMap="baseMap" parameterType="java.lang.Integer">
+        SELECT COUNT(*) AS DimCount FROM bi_report_field
+        WHERE 1=1
+        AND REPORT_ID = #{reportId}
+        AND FIELD_LOCATION = 1
+    </select>
+
+    <delete id="deleteReportField" parameterType="java.lang.Integer">
+        DELETE FROM bi_report_field WHERE REPORT_FIELD_ID = #{report_Field_Id}
+    </delete>
+
+    <insert id="save" parameterType="cn.zup.bi.entity.BI_REPORT_FIELD" useGeneratedKeys="true" keyColumn="REPORT_ID" keyProperty="reportField.report_Id">
+        INSERT INTO BI_REPORT_FIELD (
+            REPORT_ID,
+            FIELD_LOCATION,
+            DIM_ORDER,
+            DISPLAY,
+
+            FIELD_NAME,
+            FIELD_CAPTION,
+            FIELD_TITLE,
+            DATA_TYPE,
+            FIELD_TYPE,
+            AGGREGATE_TYPE,
+            UNIT,
+            DIM_ID
+
+        ) VALUES
+        (
+            #{reportField.report_Id},
+            #{reportField.field_Location},
+            #{reportField.dim_Order},
+            #{reportField.display},
+
+            #{reportField.field_Name},
+            #{reportField.field_Caption},
+            #{reportField.field_Title},
+            #{reportField.data_Type},
+            #{reportField.field_Type},
+            #{reportField.aggregate_Type},
+            #{reportField.unit},
+            #{reportField.dim_Id}
+
+        );
+    </insert>
+
+    <update id="updateReportField" parameterType="cn.zup.bi.entity.BI_REPORT_FIELD">
+        UPDATE bi_report_field brf
+        <trim prefix="set" suffixOverrides=",">
+            <if test="reportField.dim_Order != null">
+                brf.DIM_ORDER = #{ reportField.dim_Order},
+            </if>
+
+            <if test="reportField.field_Location != null">
+                brf.FIELD_LOCATION = #{ reportField.field_Location},
+            </if>
+
+            <if test="reportField.display != null">
+                brf.DISPLAY = #{ reportField.display},
+            </if>
+            <if test="reportField.field_Name != null">
+                brf.FIELD_NAME = #{ reportField.field_Name},
+            </if>
+
+            <if test="reportField.field_Caption != null">
+                brf.FIELD_CAPTION = #{ reportField.field_Caption},
+            </if>
+            <if test="reportField.field_Title != null">
+                brf.FIELD_TITLE = #{ reportField.field_Title},
+            </if>
+            <if test="reportField.data_Type != null">
+                brf.DATA_TYPE = #{ reportField.data_Type},
+            </if>
+            <if test="reportField.field_Type != null">
+                brf.FIELD_TYPE = #{ reportField.field_Type},
+            </if>
+            <if test="reportField.aggregate_Type != null">
+                brf.AGGREGATE_TYPE = #{ reportField.aggregate_Type},
+            </if>
+            <if test="reportField.unit != null">
+                brf.UNIT = #{ reportField.unit},
+            </if>
+            <if test="reportField.dim_Id != null">
+                brf.DIM_ID = #{ reportField.dim_Id},
+            </if>
+
+        </trim>
+
+        WHERE brf.REPORT_FIELD_ID = #{ reportField.report_Field_Id}
+        AND brf.REPORT_ID = #{ reportField.report_Id}
+    </update>
+</mapper>
